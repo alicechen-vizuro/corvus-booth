@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#060E15">
-<meta name="description" content="Corvus：上傳 OBJ 3D 檔，即可自動生成物件辨識 AI 模型。">
+<meta name="description" content="Corvus：上傳 OBJ 3D 檔，即可自動生成物件辨識 AI 模型。Upload an OBJ 3D file and Corvus automatically builds an object recognition AI model.">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; }
 img { max-width: 100%; }
+[hidden] { display: none !important; }
 </style>
 <title>Corvus 展場頁</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Manrope:wght@700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Manrope:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
-/* Layout: one phone-width column of full-bleed dark sections; framed and centered on wider screens */
+/* Layout: one phone-width column of full-bleed dark sections under a sticky language bar; framed and centered on wider screens */
 :root {
   color-scheme: dark;
   --page: #060E15;
@@ -47,6 +48,7 @@ body {
   margin: 0 auto;
   background: var(--base);
   overflow: hidden;
+  overflow: clip;
 }
 @media (min-width: 600px) {
   body {
@@ -63,6 +65,55 @@ body {
     box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
   }
 }
+
+/* Language bar */
+.langbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px 8px 24px;
+  background: rgba(6, 14, 21, 0.78);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--frame);
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.lang-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--tag);
+  border: 1px solid var(--line);
+}
+.lang-switch button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 56px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.lang-switch button[aria-pressed="true"] {
+  background: var(--mist);
+  color: var(--tag);
+}
+.lang-switch button:focus-visible { outline: 2px solid var(--mist); outline-offset: 2px; }
 
 .fx-canvas {
   position: absolute;
@@ -113,6 +164,7 @@ body {
   letter-spacing: 0.01em;
   color: #FFFFFF;
 }
+html[lang="en"] .hero h1 { letter-spacing: -0.005em; }
 .tags { display: flex; flex-wrap: wrap; gap: 10px; }
 .tag {
   background: var(--tag);
@@ -122,7 +174,7 @@ body {
   color: var(--ink);
   opacity: 0.9;
 }
-.hero-copy p { margin: 0; font-size: 14px; line-height: 1.75; color: var(--ink); }
+.hero-copy p { margin: 0; font-size: 14px; line-height: 1.75; color: var(--ink); max-width: 30em; }
 
 /* Shared section type */
 .section {
@@ -194,7 +246,7 @@ body {
     radial-gradient(circle at 92% 95%, rgba(var(--glow-b), 0.2) 0%, rgba(var(--glow-b), 0) 45%),
     var(--base-2);
 }
-.steps { display: flex; flex-direction: column; }
+.steps { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
 .step { display: flex; align-items: center; gap: 18px; }
 .step img {
   flex: none;
@@ -266,51 +318,60 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .shake-vertical, .shake-vertical-reverse { animation: none; }
+  .lang-switch button { transition: none; }
 }
 </style>
 </head>
 <body>
 <main class="page">
 
+  <nav class="langbar" aria-label="Language">
+    <span class="wordmark">Corvus</span>
+    <div class="lang-switch" role="group" aria-label="切換語言 / Switch language">
+      <button type="button" id="lang-zh" data-lang="zh" aria-pressed="true" lang="zh-Hant-TW">中文</button>
+      <button type="button" id="lang-en" data-lang="en" aria-pressed="false" lang="en">EN</button>
+    </div>
+  </nav>
+
   <section class="hero" aria-labelledby="hero-title">
     <canvas class="fx-canvas" id="heroBg" aria-hidden="true"></canvas>
-    <img class="hero-ring" src="assets/corvus-hero.jpg" alt="玻璃質感的環狀資料流，象徵 3D 模型轉換成 AI 訓練資料" width="1200" height="1000">
+    <img class="hero-ring" src="assets/corvus-hero.jpg" data-i18n-alt="heroAlt" alt="玻璃質感的環狀資料流，象徵 3D 模型轉換成 AI 訓練資料" width="1200" height="1000">
     <div class="hero-copy">
-      <h1 id="hero-title">想做 AI 但沒有資料？<br>你需要 Corvus</h1>
+      <h1 id="hero-title" data-i18n="heroTitle">想做 AI 但沒有資料？<br>你需要 Corvus</h1>
       <div class="tags">
-        <span class="tag">＃不需人工標記</span>
-        <span class="tag">＃不需拍照</span>
+        <span class="tag" data-i18n="tag1">＃不需人工標記</span>
+        <span class="tag" data-i18n="tag2">＃不需拍照</span>
       </div>
-      <p>上傳 OBJ 3D 檔，即可自動生成物件辨識 AI 模型。</p>
+      <p data-i18n="heroDesc">上傳 OBJ 3D 檔，即可自動生成物件辨識 AI 模型。</p>
     </div>
   </section>
 
   <section class="section pain" aria-labelledby="pain-title">
     <canvas class="fx-canvas" id="painBg" aria-hidden="true"></canvas>
     <div class="heading">
-      <p class="eyebrow">你是否也遇到這些困擾？</p>
-      <h2 id="pain-title">想導入 AI 視覺辨識，<br>卻卡在資料量不足</h2>
+      <p class="eyebrow" data-i18n="painEyebrow">你是否也遇到這些困擾？</p>
+      <h2 id="pain-title" data-i18n="painTitle">想導入 AI 視覺辨識，<br>卻卡在資料量不足</h2>
     </div>
     <div class="pain-list">
       <div class="pain-card glass">
         <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#A9BFD1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg></div>
         <div>
-          <h3>“人工拍照、標註費時又費力 ”</h3>
-          <p>需要外包或專人處理，時間與成本都難以控制。</p>
+          <h3 data-i18n="pain1Title">“人工拍照、標註費時又費力 ”</h3>
+          <p data-i18n="pain1Body">需要外包或專人處理，時間與成本都難以控制。</p>
         </div>
       </div>
       <div class="pain-card glass flip">
         <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#A9BFD1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.4-4.4"></path><path d="M11 8v3.5"></path><path d="M11 14h0.01"></path></svg></div>
         <div>
-          <h3>“真正要抓的瑕疵太少見，照片湊不齊 ”</h3>
-          <p>不良品樣本稀少，模型學不會辨識真正重要的問題。</p>
+          <h3 data-i18n="pain2Title">“真正要抓的瑕疵太少見，照片湊不齊 ”</h3>
+          <p data-i18n="pain2Body">不良品樣本稀少，模型學不會辨識真正重要的問題。</p>
         </div>
       </div>
       <div class="pain-card glass">
         <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#A9BFD1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M4 7.5l8 4.5 8-4.5"></path><path d="M12 12v9"></path></svg></div>
         <div>
-          <h3>“產品開發中，沒有實體可以拍 ”</h3>
-          <p>等到樣品出來才開始蒐集資料，AI 永遠追不上產品上市的速度。</p>
+          <h3 data-i18n="pain3Title">“產品開發中，沒有實體可以拍 ”</h3>
+          <p data-i18n="pain3Body">等到樣品出來才開始蒐集資料，AI 永遠追不上產品上市的速度。</p>
         </div>
       </div>
     </div>
@@ -318,32 +379,32 @@ body {
 
   <section class="section steps-section" aria-labelledby="steps-title">
     <div class="heading">
-      <p class="eyebrow">Corvus 視覺辨識模型建置平台</p>
-      <h2 id="steps-title">從 3D 模型到<br>AI 訓練資料的捷徑！</h2>
-      <p class="lede">不需要 3D 渲染經驗，不需要撰寫程式，Corvus 幫你產出影像資料集，以及可使用的辨識模型。</p>
+      <p class="eyebrow" data-i18n="stepsEyebrow">Corvus 視覺辨識模型建置平台</p>
+      <h2 id="steps-title" data-i18n="stepsTitle">從 3D 模型到<br>AI 訓練資料的捷徑！</h2>
+      <p class="lede" data-i18n="stepsLede">不需要 3D 渲染經驗，不需要撰寫程式，Corvus 幫你產出影像資料集，以及可使用的辨識模型。</p>
     </div>
-    <ol class="steps" style="list-style: none; margin: 0; padding: 0">
+    <ol class="steps">
       <li class="step">
-        <img class="shake-vertical" src="assets/step-01-upload.png" alt="OBJ 檔案上傳到雲端的插圖" width="264" height="264">
+        <img class="shake-vertical" src="assets/step-01-upload.png" data-i18n-alt="step1Alt" alt="OBJ 檔案上傳到雲端的插圖" width="264" height="264">
         <div class="step-text">
           <span class="step-label"><span class="dot" aria-hidden="true"></span>STEP 01</span>
-          <span class="step-title">上傳 3D 檔</span>
+          <span class="step-title" data-i18n="step1">上傳 3D 檔</span>
         </div>
       </li>
       <li class="connector" aria-hidden="true"></li>
       <li class="step">
-        <img class="shake-vertical-reverse pad" src="assets/step-02-settings.png" alt="調整 3D 物件參數的設定面板插圖" width="264" height="264">
+        <img class="shake-vertical-reverse pad" src="assets/step-02-settings.png" data-i18n-alt="step2Alt" alt="調整 3D 物件參數的設定面板插圖" width="264" height="264">
         <div class="step-text">
           <span class="step-label"><span class="dot" aria-hidden="true"></span>STEP 02</span>
-          <span class="step-title">設定物件參數</span>
+          <span class="step-title" data-i18n="step2">設定物件參數</span>
         </div>
       </li>
       <li class="connector" aria-hidden="true"></li>
       <li class="step">
-        <img class="shake-vertical" src="assets/step-03-dataset.png" alt="多張已標註的 3D 物件影像疊在一起的插圖" width="264" height="264">
+        <img class="shake-vertical" src="assets/step-03-dataset.png" data-i18n-alt="step3Alt" alt="多張已標註的 3D 物件影像疊在一起的插圖" width="264" height="264">
         <div class="step-text">
           <span class="step-label"><span class="dot" aria-hidden="true"></span>STEP 03</span>
-          <span class="step-title">產出資料集＆模型</span>
+          <span class="step-title" data-i18n="step3">產出資料集＆模型</span>
         </div>
       </li>
     </ol>
@@ -352,34 +413,105 @@ body {
   <section class="section cases" aria-labelledby="cases-title">
     <div class="heading">
       <p class="eyebrow caps">CASE STUDIES</p>
-      <h2 id="cases-title">成功案例</h2>
+      <h2 id="cases-title" data-i18n="casesTitle">成功案例</h2>
     </div>
     <div class="case-list">
       <article class="case glass">
-        <img src="assets/case-corepal.jpg" alt="拆開前保桿的汽車車頭，可見大燈與引擎室零件" width="504" height="300">
+        <img src="assets/case-corepal.jpg" data-i18n-alt="case1Alt" alt="拆開前保桿的汽車車頭，可見大燈與引擎室零件" width="504" height="300">
         <div class="case-body">
-          <div class="case-head"><span class="pill">CorePal</span><span class="case-title">美國汽車零件辨識</span></div>
-          <p>CorePal 的回收汽車零件多達 500 類，人工拍攝標註耗時，也難涵蓋各種角度與光線。透過 Corvus 以 3D 檔生成多角度、多光源的訓練影像並自動標註，邊緣裝置即時辨識準確率達 90% 以上。</p>
+          <div class="case-head"><span class="pill">CorePal</span><span class="case-title" data-i18n="case1Title">美國汽車零件辨識</span></div>
+          <p data-i18n="case1Body">CorePal 的回收汽車零件多達 500 類，人工拍攝標註耗時，也難涵蓋各種角度與光線。透過 Corvus 以 3D 檔生成多角度、多光源的訓練影像並自動標註，邊緣裝置即時辨識準確率達 90% 以上。</p>
         </div>
       </article>
       <article class="case glass">
-        <img src="assets/case-nxp.jpg" alt="陽光照射下的大片太陽能板" width="504" height="300">
+        <img src="assets/case-nxp.jpg" data-i18n-alt="case2Alt" alt="陽光照射下的大片太陽能板" width="504" height="300">
         <div class="case-body">
-          <div class="case-head"><span class="pill">NXP</span><span class="case-title">太陽能板瑕疵巡檢</span></div>
-          <p>太陽能場的熱斑、裂痕等缺陷零散分布，人工巡檢耗時，罕見缺陷影像也難收集。NXP 以場域 3D 掃描為基礎，透過 Corvus 生成不同天候與光線下的可見光與熱影像缺陷資料，訓練巡檢模型。</p>
+          <div class="case-head"><span class="pill">NXP</span><span class="case-title" data-i18n="case2Title">太陽能板瑕疵巡檢</span></div>
+          <p data-i18n="case2Body">太陽能場的熱斑、裂痕等缺陷零散分布，人工巡檢耗時，罕見缺陷影像也難收集。NXP 以場域 3D 掃描為基礎，透過 Corvus 生成不同天候與光線下的可見光與熱影像缺陷資料，訓練巡檢模型。</p>
         </div>
       </article>
     </div>
   </section>
 
   <footer class="footer">
-    <p>Vizuro Taiwan Company Ltd.<br>臺北市中正區忠孝東路2段120號5樓<br>(02) 2341-0294｜<a href="https://www.vizuro.com/" target="_blank" rel="noopener">www.vizuro.com</a></p>
+    <p><span data-i18n="footerAddress">Vizuro Taiwan Company Ltd.<br>臺北市中正區忠孝東路2段120號5樓<br>(02) 2341-0294</span>｜<a href="https://www.vizuro.com/" target="_blank" rel="noopener">www.vizuro.com</a></p>
   </footer>
 
 </main>
 
 <script>
 (() => {
+  /* ---------- Language switch ---------- */
+  const EN = {
+    heroAlt: 'A glass ring of flowing data panels, representing 3D models turning into AI training data',
+    heroTitle: 'No training data?<br>You need Corvus',
+    tag1: '#No manual labeling',
+    tag2: '#No photo shoots',
+    heroDesc: 'Upload an OBJ 3D file and Corvus automatically builds an object recognition AI model.',
+    painEyebrow: 'Sound familiar?',
+    painTitle: 'You want vision AI,<br>but you don’t have the data',
+    pain1Title: '“Shooting and labeling photos takes forever.”',
+    pain1Body: 'It means outsourcing or tying up staff, and time and cost are hard to control.',
+    pain2Title: '“The defects that matter are too rare to photograph.”',
+    pain2Body: 'With so few defect samples, the model never learns to spot the problems that count.',
+    pain3Title: '“The product is still in development. There’s nothing to shoot.”',
+    pain3Body: 'If data collection waits for physical samples, your AI will always lag behind launch.',
+    stepsEyebrow: 'Corvus vision AI model platform',
+    stepsTitle: 'The shortcut from<br>3D models to AI training data',
+    stepsLede: 'No 3D rendering skills and no coding needed. Corvus produces the image dataset and a recognition model you can put to work.',
+    step1Alt: 'Illustration of an OBJ file uploading to the cloud',
+    step1: 'Upload a 3D file',
+    step2Alt: 'Illustration of a settings panel for adjusting 3D object parameters',
+    step2: 'Set object parameters',
+    step3Alt: 'Illustration of stacked, labeled images of a 3D object',
+    step3: 'Get the dataset &amp; model',
+    casesTitle: 'Customer success stories',
+    case1Alt: 'The front of a car with the bumper removed, showing the headlight and engine bay parts',
+    case1Title: 'Auto parts recognition, USA',
+    case1Body: 'CorePal handles more than 500 categories of recycled auto parts. Photographing and labeling them by hand was slow and could never cover every angle and lighting condition. With Corvus, CorePal generated multi-angle, multi-light training images from 3D files with automatic labels, and its edge devices now recognize parts in real time with over 90% accuracy.',
+    case2Alt: 'A large field of solar panels in the sun',
+    case2Title: 'Solar panel defect inspection',
+    case2Body: 'Hot spots, cracks and other defects are scattered across solar farms, manual inspection takes a long time, and images of rare defects are hard to collect. Starting from 3D scans of the site, NXP used Corvus to generate visible-light and thermal defect images across different weather and lighting conditions to train its inspection model.',
+    footerAddress: 'Vizuro Taiwan Company Ltd.<br>5F, No. 120, Sec. 2, Zhongxiao E. Rd.,<br>Zhongzheng Dist., Taipei City, Taiwan<br>+886-2-2341-0294'
+  };
+
+  const textEls = Array.from(document.querySelectorAll('[data-i18n]'));
+  const altEls = Array.from(document.querySelectorAll('[data-i18n-alt]'));
+  const ZH = {};
+  textEls.forEach((el) => { ZH[el.dataset.i18n] = el.innerHTML; });
+  altEls.forEach((el) => { ZH[el.dataset.i18nAlt] = el.getAttribute('alt'); });
+  const buttons = Array.from(document.querySelectorAll('.lang-switch button'));
+
+  function applyLang(lang) {
+    const dict = lang === 'en' ? EN : ZH;
+    textEls.forEach((el) => {
+      const v = dict[el.dataset.i18n];
+      if (v !== undefined) el.innerHTML = v;
+    });
+    altEls.forEach((el) => {
+      const v = dict[el.dataset.i18nAlt];
+      if (v !== undefined) el.setAttribute('alt', v);
+    });
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant-TW';
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    try { localStorage.setItem('corvus-lang', lang); } catch (e) { /* storage unavailable */ }
+  }
+
+  buttons.forEach((b) => b.addEventListener('click', () => {
+    applyLang(b.dataset.lang);
+    try { history.replaceState(null, '', '#' + b.dataset.lang); } catch (e) { /* ignore */ }
+  }));
+
+  let initial = 'zh';
+  const hash = (location.hash || '').replace('#', '');
+  if (hash === 'en' || hash === 'zh') {
+    initial = hash;
+  } else {
+    try { const saved = localStorage.getItem('corvus-lang'); if (saved === 'en' || saved === 'zh') initial = saved; } catch (e) { /* ignore */ }
+  }
+  applyLang(initial);
+
+  /* ---------- Flowing glow backgrounds (WebGL) ---------- */
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const VERT = 'attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }';
@@ -572,7 +704,7 @@ body {
     speed: 1, drift: 1, breath: 0.1, warp: 0.07, opA: 0.28, opB: 0.22, grain: 0.05
   });
 
-  // Keep the screen awake while the page is on show at the booth
+  /* ---------- Keep the screen awake while the page is on show ---------- */
   let wakeLock = null;
   async function keepAwake() {
     if (wakeLock || document.visibilityState !== 'visible' || !('wakeLock' in navigator)) return;
